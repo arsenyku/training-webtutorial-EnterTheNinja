@@ -698,10 +698,10 @@
 		12563F6B1BC2FCE000F6EAFF /* EnterTheNinja */ = {
 			isa = PBXGroup;
 			children = (
+				125642201BC2FCE300F6EAFF /* Classes */,
 				12563F6C1BC2FCE000F6EAFF /* Resources */,
 				12563F951BC2FCE000F6EAFF /* Frameworks */,
 				12563F981BC2FCE000F6EAFF /* Libraries */,
-				125642201BC2FCE300F6EAFF /* Classes */,
 				1256421C1BC2FCE300F6EAFF /* Supporting Files */,
 			);
 			path = EnterTheNinja;
