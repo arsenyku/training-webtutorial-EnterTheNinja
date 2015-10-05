@@ -33,13 +33,15 @@
     // 3
     self.userInteractionEnabled = YES;
     
+    [[OALSimpleAudio sharedInstance] playBg:@"background-music-aac.caf" loop:YES];
+    
     // 4
     CCNodeColor *background = [CCNodeColor nodeWithColor:[CCColor lightGrayColor]];
     [self addChild:background];
     
     _physicsWorld = [CCPhysicsNode node];
     _physicsWorld.gravity = ccp(0,0);
-    _physicsWorld.debugDraw = YES;
+    _physicsWorld.debugDraw = NO;
     _physicsWorld.collisionDelegate = self;
     [self addChild:_physicsWorld];
     
@@ -104,8 +106,9 @@
 
 
 - (void)touchBegan:(UITouch *)touch withEvent:(UIEvent *)event {
+	[[OALSimpleAudio sharedInstance] playEffect:@"pew-pew-lei.caf"];
+    
     // 1
-
     CGPoint touchLocation = [(CCTouch*)touch locationInNode:self];
     
     // 2
@@ -119,7 +122,8 @@
     CCSprite *projectile = [CCSprite spriteWithImageNamed:@"projectile.png"];
     projectile.position = _player.position;
     
-    projectile.physicsBody = [CCPhysicsBody bodyWithRect:(CGRect){CGPointZero, projectile.contentSize} cornerRadius:0]; // 1
+	projectile.physicsBody = [CCPhysicsBody bodyWithCircleOfRadius:projectile.contentSize.width/2.0f
+                                                         andCenter:projectile.anchorPointInPoints];
     projectile.physicsBody.collisionGroup = @"playerGroup"; // 2
     projectile.physicsBody.collisionType  = @"projectileCollision";
     [_physicsWorld addChild:projectile];
@@ -131,6 +135,15 @@
     [projectile runAction:[CCActionSequence actionWithArray:@[actionMove,actionRemove]]];
 }
 
+
+- (BOOL)ccPhysicsCollisionBegin:(CCPhysicsCollisionPair *)pair
+               monsterCollision:(CCNode *)monster
+            projectileCollision:(CCNode *)projectile {
+    
+    [monster removeFromParent];
+    [projectile removeFromParent];
+    return YES;
+}
 
 // -----------------------------------------------------------------------
 
