@@ -11,11 +11,12 @@
 // -----------------------------------------------------------------
 
 #import "HelloWorldScene.h"
-
+#import "CCTouch.h"
 // -----------------------------------------------------------------------
 
-@interface HelloWorldScene()
+@interface HelloWorldScene() <CCPhysicsCollisionDelegate>
 @property (nonatomic, strong) CCSprite *player;
+@property (nonatomic, strong) CCPhysicsNode *physicsWorld;
 @end
 
 
@@ -33,18 +34,23 @@
     self.userInteractionEnabled = YES;
     
     // 4
-    CCNodeColor *background = [CCNodeColor nodeWithColor:[CCColor lightGrayColor]];     //    [CCColor colorWithRed:0.2f green:0.2f blue:0.2f alpha:1.0f]];
+    CCNodeColor *background = [CCNodeColor nodeWithColor:[CCColor lightGrayColor]];
     [self addChild:background];
+    
+    _physicsWorld = [CCPhysicsNode node];
+    _physicsWorld.gravity = ccp(0,0);
+    _physicsWorld.debugDraw = YES;
+    _physicsWorld.collisionDelegate = self;
+    [self addChild:_physicsWorld];
     
     // 5
     _player = [CCSprite spriteWithImageNamed:@"player.png"];
-    _player.position  = ccp(self.contentSize.width/2,self.contentSize.height/2);
-    [self addChild:_player];
-    
-    // 6
-    CCActionRotateBy* actionSpin = [CCActionRotateBy actionWithDuration:1.5f angle:360];
-    [_player runAction:[CCActionRepeatForever actionWithAction:actionSpin]];
-    
+    _player.position  = ccp(self.contentSize.width/8,self.contentSize.height/2);
+
+    _player.physicsBody = [CCPhysicsBody bodyWithRect:(CGRect){CGPointZero, _player.contentSize} cornerRadius:0]; // 1
+    _player.physicsBody.collisionGroup = @"playerGroup"; // 2
+    [_physicsWorld addChild:_player];
+  
     // 7
     CCButton *backButton = [CCButton buttonWithTitle:@"[ Menu ]" fontName:@"Verdana-Bold" fontSize:18.0f];
     backButton.positionType = CCPositionTypeNormalized;
@@ -73,7 +79,11 @@
     
     // 2
     monster.position = CGPointMake(self.contentSize.width + monster.contentSize.width/2, randomY);
-    [self addChild:monster];
+    
+    monster.physicsBody = [CCPhysicsBody bodyWithRect:(CGRect){CGPointZero, monster.contentSize} cornerRadius:0]; // 1
+    monster.physicsBody.collisionGroup = @"monsterGroup"; // 2
+    monster.physicsBody.collisionType  = @"monsterCollision";
+    [_physicsWorld addChild:monster];
     
     // 3
     int minDuration = 2.0;
@@ -91,6 +101,36 @@
     [super onEnter];
     [self schedule:@selector(addMonster:) interval:1.5];
 }
+
+
+- (void)touchBegan:(UITouch *)touch withEvent:(UIEvent *)event {
+    // 1
+
+    CGPoint touchLocation = [(CCTouch*)touch locationInNode:self];
+    
+    // 2
+    CGPoint offset    = ccpSub(touchLocation, _player.position);
+    float   ratio     = offset.y/offset.x;
+    int     targetX   = _player.contentSize.width/2 + self.contentSize.width;
+    int     targetY   = (targetX*ratio) + _player.position.y;
+    CGPoint targetPosition = ccp(targetX,targetY);
+    
+    // 3
+    CCSprite *projectile = [CCSprite spriteWithImageNamed:@"projectile.png"];
+    projectile.position = _player.position;
+    
+    projectile.physicsBody = [CCPhysicsBody bodyWithRect:(CGRect){CGPointZero, projectile.contentSize} cornerRadius:0]; // 1
+    projectile.physicsBody.collisionGroup = @"playerGroup"; // 2
+    projectile.physicsBody.collisionType  = @"projectileCollision";
+    [_physicsWorld addChild:projectile];
+
+    
+    // 4
+    CCActionMoveTo *actionMove   = [CCActionMoveTo actionWithDuration:1.5f position:targetPosition];
+    CCActionRemove *actionRemove = [CCActionRemove action];
+    [projectile runAction:[CCActionSequence actionWithArray:@[actionMove,actionRemove]]];
+}
+
 
 // -----------------------------------------------------------------------
 
